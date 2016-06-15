@@ -4,6 +4,7 @@ target_dir="target"
 output_dir="tmp_results"
 problem_set_dir=""
 problem_id=""
+test_id=""
 
 function cleanup_dir {
   if [ -d "$target_dir" ]
@@ -62,6 +63,10 @@ function run_test {
   fi
 }
 
+function run_single_test {
+  $target_dir/$problem_id < test/$1.in
+}
+
 function run_tests {
   for f in test/*.in
   do
@@ -74,7 +79,12 @@ function run_dir {
   compile
   if [ "$?" -eq 0 ]
   then
-    run_tests
+    if [ $test_id ]
+    then
+      run_single_test $test_id
+    else
+      run_tests
+    fi
   else
     echo "Compilation failed"
     return 1
@@ -85,6 +95,12 @@ if [ "$#" -lt 2 ]
 then
   echo "Usage: run_tests.sh <problem_set_dir> <problem_id>"
   exit 1
+fi
+
+if [ "$#" -ge 3 ]
+then
+  test_id=$3
+  echo "Running single test: $test_id"
 fi
 
 if [ ! -d "$1" ]
