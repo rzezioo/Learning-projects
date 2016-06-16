@@ -14,10 +14,11 @@ class Edge {
 class Graph {
   private:
   vector<vector<Edge> > _edges;
+  vector<int> _min_distances;
   int _vert_n;
   
   public:
-  Graph(int n): _edges(n, vector<Edge>()), _vert_n(n) {
+  Graph(int n): _edges(n, vector<Edge>()), _vert_n(n), _min_distances(n,INT_MAX) {
   }
   
   void add_edge(int va, int vb, int d) {
@@ -25,15 +26,23 @@ class Graph {
     _edges[vb-1].push_back(Edge(va-1,d));
   }
   
-  vector<int>* compute_distances(int source) {
-    vector<int>* results = new vector<int>(_vert_n, INT_MAX);
-    vector<int>& dist = *results;
-    dist[source] = 0;
+  void compute_distances(int source) {
+    int dist[_vert_n];
+    bool visited[_vert_n];
+    for(int i=0; i<_vert_n;i++) {
+      visited[i] = false;
+      if(i==source) 
+        dist[i]=0;
+      else
+        dist[i]=INT_MAX;
+    }
     priority_queue<pair<int,int> > vert_queue;
     vert_queue.push(make_pair(0,source));
     while(!vert_queue.empty()) {
       pair<int, int> s = vert_queue.top();
       vert_queue.pop();
+      if(visited[s.second])
+        continue;
       for(vector<Edge>::iterator i = _edges[s.second].begin(); i != _edges[s.second].end(); i++) {
         if(dist[i->vertex] > dist[s.second] + i->distance) {
           dist[i->vertex] = dist[s.second] + i->distance;
@@ -41,21 +50,18 @@ class Graph {
         }
       }
     }
-    //print_distances(source, dist);
-    return results;
+    for(int i = 0; i<_vert_n;i++) {
+      if(dist[i] < _min_distances[i])
+        _min_distances[i] = dist[i];
+    }
   }
   
   int get_max_distance(vector<int> restaurants) {
-    vector<int> min_distances(_vert_n, INT_MAX);
     for(vector<int>::iterator i = restaurants.begin(); i!=restaurants.end(); i++) {
-      vector<int>& distances = *(compute_distances(*i-1));
-      for(int j = 0; j<_vert_n; j++) {
-        if(min_distances[j] > distances[j])
-          min_distances[j] = distances[j];
-      }
+      compute_distances(*i-1);
     }
     int result = -1;
-    for(vector<int>::iterator i = min_distances.begin(); i!=min_distances.end(); i++) {
+    for(vector<int>::iterator i = _min_distances.begin(); i!=_min_distances.end(); i++) {
       if(*i > result)
         result = *i;
     }
